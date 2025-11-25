@@ -2,11 +2,10 @@ import nodemailer from 'nodemailer';
 
 const sendEmail = async (options) => {
   try {
-    // Create Transporter using Brevo (or any SMTP service defined in env)
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
-      secure: false, // true for 465, false for other ports (587)
+      secure: false, // Brevo uses STARTTLS on port 587, so secure is false
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
