@@ -2,10 +2,12 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 import generateToken from '../utils/generateToken.js';
-import crypto from 'crypto'; 
-import sendEmail from '../utils/sendEmail.js'; // 1. IMPORT EMAIL HELPER
+import crypto from 'crypto';
+import sendEmail from '../utils/sendEmail.js';
 
 // @desc    Register a new customer
+// @route   POST /api/users/register
+// @access  Public
 const registerCustomer = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body;
 
@@ -33,6 +35,7 @@ const registerCustomer = asyncHandler(async (req, res) => {
 
   if (user) {
     generateToken(res, user._id);
+    
     res.status(201).json({
       _id: user.id,
       name: user.name,
@@ -46,12 +49,15 @@ const registerCustomer = asyncHandler(async (req, res) => {
 });
 
 // @desc    Auth user & get token (Login)
+// @route   POST /api/users/login
+// @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email }).populate('shop');
 
   if (user && (await bcrypt.compare(password, user.password))) {
     
+    // Check for Subscription Expiry (Shopkeeper only)
     if (user.userType === 'shopkeeper' && user.shop) {
       const now = new Date();
       const expiryDate = new Date(user.shop.subscriptionExpiresAt);
@@ -77,6 +83,8 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 // @desc    Logout user & clear cookie
+// @route   POST /api/users/logout
+// @access  Private
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie('jwt', '', {
     httpOnly: true,
@@ -85,7 +93,6 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'User logged out' });
 });
 
-// --- REAL EMAIL VERSION: Forgot Password ---
 // @desc    Forgot Password (Send Reset Link)
 // @route   POST /api/users/forgotpassword
 // @access  Public
@@ -98,26 +105,18 @@ const forgotPassword = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // 1. Generate token
+  // Generate token
   const resetToken = crypto.randomBytes(20).toString('hex');
-
-  // 2. Hash and save
-  user.resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
-  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 mins
-
+  user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
   await user.save();
 
-  // 3. Generate URL
-  // Use the environment variable for the live site URL
+  // Generate URL
+  // Use env var for production URL, fallback to localhost for dev
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const path = user.userType === 'shopkeeper' ? 'shop/reset-password' : 'reset-password';
   const resetUrl = `${baseUrl}/${path}/${resetToken}`;
 
-  // 4. Create Email Message
   const message = `
     <h1>Password Reset Request</h1>
     <p>You requested a password reset for your Local Shop account.</p>
@@ -127,7 +126,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   `;
 
   try {
-    // 5. Send Real Email
+    console.log(`Attempting to send email to: ${user.email}`);
     await sendEmail({
       to: user.email,
       subject: 'Local Shop - Password Reset',
@@ -141,13 +140,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.resetPasswordExpire = undefined;
     await user.save();
 
-    console.error("Email send failed:", error);
+    console.error("Forgot Password Controller Error:", error.message);
     res.status(500);
-    throw new Error('Email could not be sent');
+    throw new Error('Email could not be sent. Check server logs.');
   }
 });
 
 // @desc    Reset Password
+// @route   PUT /api/users/resetpassword/:resetToken
+// @access  Public
 const resetPassword = asyncHandler(async (req, res) => {
   const resetPasswordToken = crypto
     .createHash('sha256')
@@ -176,6 +177,8 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get all users (Admin)
+// @route   GET /api/users
+// @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find({});
   res.json(users);
