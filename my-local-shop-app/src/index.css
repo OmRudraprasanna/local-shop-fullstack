@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- ADD THIS RULE --- */
+html {
+  scroll-behavior: smooth;
+}
+/* --- END --- */
