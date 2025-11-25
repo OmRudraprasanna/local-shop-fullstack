@@ -10,27 +10,32 @@ import { CustomerAuthProvider } from './context/CustomerAuthContext.jsx';
 import { ShopAuthProvider } from './context/ShopAuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 
-// --- CRITICAL FIX: Connect Frontend to Backend ---
-// 1. Check if we are in production (deployed on Vercel)
-if (import.meta.env.PROD) {
-  // 2. HARDCODE YOUR RENDER URL HERE.
-  // This tells Axios to send requests to your live server, not localhost.
-  // Make sure this URL matches your Render dashboard exactly (no trailing slash).
+// --- CONFIGURING API CONNECTION ---
+// 1. Check for VITE_API_URL (Environment Variable)
+// 2. Check for PROD mode (Hardcoded fallback)
+// 3. Default to relative path (Proxy for localhost)
+
+const apiUrl = import.meta.env.VITE_API_URL;
+
+if (apiUrl) {
+  axios.defaults.baseURL = apiUrl;
+  console.log('Using API URL from Env:', apiUrl);
+} else if (import.meta.env.PROD) {
+  // Fallback for production if env var is missing
+  // REPLACE THIS WITH YOUR EXACT RENDER URL
   axios.defaults.baseURL = 'https://local-shop-api.onrender.com'; 
-  
-  console.log('Production Mode: API Base URL set to:', axios.defaults.baseURL);
+  console.log('Using Hardcoded Production API URL:', axios.defaults.baseURL);
 } else {
-  // 3. Development Mode (Localhost)
-  // We don't set a baseURL here. 
-  // Instead, we rely on the Proxy in vite.config.js to forward '/api' to localhost:8000
-  console.log('Development Mode: Using Proxy');
+  // Development: Use Proxy
+  console.log('Using Development Proxy');
 }
-// -------------------------------------------------
+
+// Ensure credentials (cookies) are sent with every request
+axios.defaults.withCredentials = true; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      {/* Wrap App with all Auth & Data Providers */}
       <CustomerAuthProvider>
         <ShopAuthProvider>
           <CartProvider>
