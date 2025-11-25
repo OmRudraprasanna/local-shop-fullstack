@@ -7,7 +7,7 @@ import Footer from './components/Footer';
 
 // Pages
 import HomePage from './pages/HomePage';
-import AuthPage from './pages/customer/AuthPage';
+import AuthPage from './pages/customer/AuthPage'; // Customer Login/Register
 import CustomerProfilePage from './pages/customer/CustomerProfilePage';
 import ShopListingPage from './pages/customer/ShopListingPage';
 import ShopDetailsPage from './pages/customer/ShopDetailsPage';
@@ -15,13 +15,13 @@ import CheckoutPage from './pages/customer/CheckoutPage';
 import ForgotPasswordPage from './pages/customer/ForgotPasswordPage';
 import ResetPasswordPage from './pages/customer/ResetPasswordPage';
 
-// --- FIX: Ensure RegisterPage and LoginPage are imported correctly ---
-import RegisterPage from './pages/shopkeeper/RegisterPage';
-import LoginPage from './pages/shopkeeper/LoginPage';
+// Shopkeeper Pages
+import RegisterPage from './pages/shopkeeper/RegisterPage'; // <-- IMPORT THIS for Shopkeeper Registration
+import LoginPage from './pages/shopkeeper/LoginPage';       // <-- IMPORT THIS for Shopkeeper Login
 import OnboardingPage from './pages/shopkeeper/OnboardingPage';
 import ShopForgotPasswordPage from './pages/shopkeeper/ForgotPasswordPage';
 import ShopResetPasswordPage from './pages/shopkeeper/ResetPasswordPage';
-import SubscriptionExpiredPage from './pages/shopkeeper/SubscriptionExpiredPage'; // Import this too
+import SubscriptionExpiredPage from './pages/shopkeeper/SubscriptionExpiredPage';
 
 // Dashboard Pages
 import ProtectedRoute from './pages/shopkeeper/dashboard/layout/ProtectedRoute';
@@ -57,6 +57,7 @@ function App() {
       <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
       
       {/* --- Customer Auth Routes --- */}
+      {/* AuthPage handles both Login and Register for customers */}
       <Route path="/login" element={<PublicLayout><AuthPage /></PublicLayout>} />
       <Route path="/forgot-password" element={<PublicLayout><ForgotPasswordPage /></PublicLayout>} />
       <Route path="/reset-password/:resetToken" element={<PublicLayout><ResetPasswordPage /></PublicLayout>} />
@@ -65,6 +66,7 @@ function App() {
       <Route path="/checkout" element={<PublicLayout><CheckoutPage /></PublicLayout>} />
       
       {/* --- Shopkeeper Auth Routes --- */}
+      {/* These use the files in pages/shopkeeper/ */}
       <Route path="/shop/register" element={<PublicLayout><RegisterPage /></PublicLayout>} />
       <Route path="/shop/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
       <Route path="/shop/forgot-password" element={<PublicLayout><ShopForgotPasswordPage /></PublicLayout>} />
